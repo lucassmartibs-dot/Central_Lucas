@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Central do Lucas — Transpetro 2026</title>
+<style>
+:root{
+  --bg:#f4f6fa;--card:#fff;--text:#172033;--muted:#687386;--line:#e2e7ef;
+  --blue:#2563eb;--blue2:#eff6ff;--green:#16a34a;--green2:#ecfdf5;
+  --yellow:#d97706;--yellow2:#fff7ed;--red:#dc2626;--red2:#fef2f2;
+  --purple:#7c3aed;--purple2:#f5f3ff;--shadow:0 8px 25px rgba(24,39,75,.07);
+  --radius:16px
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,Segoe UI,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh;display:flex}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:245px;background:#111827;color:#fff;padding:22px 14px;z-index:5}
+.brand{font-size:20px;font-weight:800;padding:8px 10px 24px}
+.brand small{display:block;color:#9ca3af;font-size:11px;font-weight:500;margin-top:4px}
+.nav button{display:block;width:100%;border:0;background:transparent;color:#cbd5e1;text-align:left;padding:11px 12px;border-radius:11px;margin:3px 0}
+.nav button:hover,.nav button.active{background:#1f2937;color:#fff}
+.main{margin-left:245px;min-height:100vh;width:calc(100% - 245px);padding:26px;max-width:1500px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+h1{font-size:29px;margin:0}.subtitle{margin-top:4px;color:var(--muted)}
+.section{display:none}.section.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:19px;box-shadow:var(--shadow)}
+.card h2,.card h3{margin:0 0 12px}.muted{color:var(--muted)}
+.metric{font-size:30px;font-weight:800;margin:6px 0}
+.label{font-size:12px;color:var(--muted)}
+.btn{border:0;border-radius:10px;padding:10px 13px;background:var(--blue);color:#fff;font-weight:700}
+.btn:hover{filter:brightness(.96)}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+.btn.secondary{background:var(--blue2);color:#1d4ed8}.btn.green{background:#dcfce7;color:#166534}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}
+.blue{background:#dbeafe;color:#1e40af}.green{background:#dcfce7;color:#166534}.yellow{background:#fef3c7;color:#92400e}
+.red{background:#fee2e2;color:#991b1b}.purple{background:#ede9fe;color:#5b21b6}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.between{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.notice{padding:12px;border-radius:12px;background:var(--blue2);border:1px solid #bfdbfe;color:#1e3a8a}
+.progress{height:9px;border-radius:20px;background:#edf1f6;overflow:hidden}.progress i{display:block;height:100%;background:var(--blue)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:11px}.full{grid-column:1/-1}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;padding:10px}
+textarea{min-height:90px;resize:vertical}
+.list{display:grid;gap:9px}.item{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.item.done{opacity:.72;background:#f8fafc}.item.done strong{text-decoration:line-through}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+/* Calendar */
+.cal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.cal-nav{display:flex;gap:6px}.cal-nav button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px}
+.cal-title{font-size:20px;font-weight:800;text-align:center;min-width:220px}
+.cal-toggle{display:flex;gap:6px}.cal-toggle button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.month{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+.mhead{padding:9px;text-align:center;font-size:12px;font-weight:800;color:var(--muted);background:#f8fafc;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mcell{min-height:126px;padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.mcell:hover{background:#fafcff}.mcell.other{color:#a1a1aa;background:#fbfbfc}.mcell.today{box-shadow:inset 0 0 0 2px var(--blue)}
+.mnum{font-size:12px;font-weight:800;margin-bottom:6px}
+.event{font-size:11px;line-height:1.25;border-radius:6px;padding:4px 5px;margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.event.base{background:#e0e7ff;color:#3730a3}.event.custom{background:#dbeafe;color:#1e40af}
+.event.study{background:#dcfce7;color:#166534}
+.week{display:grid;grid-template-columns:65px repeat(7,minmax(120px,1fr));border:1px solid var(--line);border-radius:13px;overflow:auto;background:#fff}
+.whead{padding:9px;text-align:center;font-size:12px;font-weight:800;color:var(--muted);background:#f8fafc;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.wtime,.wslot{min-height:52px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.wtime{padding:8px;color:var(--muted);font-size:11px}.wslot{padding:3px}.wevent{font-size:10px;padding:5px;border-radius:6px;background:#dbeafe;color:#1e40af;margin:2px;cursor:pointer}
+/* Modals */
+.modal{display:none;position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:30;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}.modal-box{width:min(640px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.18)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.choice button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;text-align:left}
+.check{width:auto!important}
+/* Responsive */
+@media(max-width:1000px){.s3,.s4,.s5,.s6,.s7,.s8{grid-column:span 12}}
+@media(max-width:800px){
+ .sidebar{width:68px;padding:16px 8px}.brand{font-size:0;text-align:center}.brand:before{content:"CL";font-size:18px}.brand small{display:none}
+ .nav button{font-size:0;text-align:center}.nav button:first-letter{font-size:18px}.main{margin-left:68px;width:calc(100% - 68px);padding:15px}
+ .form{grid-template-columns:1fr}.cal-title{min-width:auto}.choice{grid-template-columns:1fr}
+}
+</style>
+
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Central Lucas">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--safe-bottom:env(safe-area-inset-bottom)}
+@media(max-width:800px){
+body{padding-bottom:calc(76px + var(--safe-bottom));-webkit-tap-highlight-color:transparent}
+.sidebar{display:none!important}.main{margin:0;width:100%;padding:calc(12px + env(safe-area-inset-top)) 12px 0}
+.topbar{margin-bottom:14px;align-items:flex-start}h1{font-size:23px}.subtitle{font-size:12px}
+.card{padding:14px;border-radius:14px}.grid{gap:10px}.s3,.s4,.s5,.s6,.s7,.s8,.s12{grid-column:span 12}.form{grid-template-columns:1fr}
+.mcell{min-height:88px;padding:5px}.mhead{padding:7px 2px;font-size:10px}.event{font-size:9px;padding:3px 4px}
+.week{grid-template-columns:44px repeat(7,minmax(92px,1fr));font-size:11px}.cal-toolbar{gap:7px}.cal-title{font-size:16px;order:3;width:100%}.cal-toggle{width:100%}.cal-toggle button{flex:1}
+.metric{font-size:26px}.btn{min-height:42px}input,select,textarea{font-size:16px;min-height:44px}textarea{min-height:100px}
+.modal{padding:12px;align-items:flex-end}.modal-box{width:100%;max-height:92vh;border-radius:18px}
+.mobile-nav{display:flex!important;position:fixed;left:0;right:0;bottom:0;z-index:20;background:#111827;color:#cbd5e1;padding:7px 5px calc(7px + var(--safe-bottom));box-shadow:0 -6px 22px rgba(0,0,0,.15)}
+.mobile-nav button{flex:1;border:0;background:transparent;color:#cbd5e1;font-size:10px;padding:7px 2px;border-radius:9px}
+.mobile-nav button.active{background:#1f2937;color:#fff}.mobile-nav b{display:block;font-size:18px;line-height:20px}
+}
+.mobile-nav{display:none}.install-tip{display:none}
+@media(max-width:800px){.install-tip{display:block}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">Central do Lucas<small>Transpetro • 29/11/2026</small></div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard">🏠 Dashboard</button>
+    <button data-page="agenda">📅 Agenda</button>
+    <button data-page="plano">✅ Plano do Dia</button>
+    <button data-page="estudos">📚 Estudos</button>
+    <button data-page="dominio">🧠 Diagnóstico / Domínio</button>
+    <button data-page="revisoes">🔄 Revisões</button>
+    <button data-page="clario">💻 Clario</button>
+    <button data-page="config">⚙️ Configurações</button>
+  </nav>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <div><h1 id="pageTitle">Dashboard</h1><div class="subtitle">Sua central de organização • Transpetro 2026</div></div>
+  <div class="muted" id="todayLabel"></div>
+</header>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section active"><div class="notice install-tip" style="margin-bottom:12px">📱 <strong>Instalar no iPhone:</strong> abra no Safari → Compartilhar → <strong>Adicionar à Tela de Início</strong>.</div>
+<div class="grid">
+  <div class="card s3"><div class="label">Dias até a prova</div><div class="metric" id="daysLeft">—</div><div class="muted">29/11/2026</div></div>
+  <div class="card s3"><div class="label">Meta diária</div><div class="metric" id="dailyGoal">—</div><div class="muted">configurável</div><div class="progress" style="margin-top:10px"><i id="goalBar" style="width:0%"></i></div></div>
+  <div class="card s3"><div class="label">Tarefas de hoje</div><div class="metric" id="todayTasks">0/0</div><div class="muted">concluídas</div></div>
+  <div class="card s3"><div class="label">Revisões de hoje</div><div class="metric" id="todayReviews">0</div><div class="muted">previstas</div></div>
+
+  <div class="card s7">
+    <div class="between"><h2>📌 Afazeres de hoje</h2><button class="btn ghost" onclick="go('plano')">Abrir Plano do Dia</button></div>
+    <div id="dashboardTasks"></div>
+  </div>
+  <div class="card s5">
+    <div class="between"><h2>📅 Agenda de hoje</h2><button class="btn ghost" onclick="go('agenda')">Abrir Agenda</button></div>
+    <div id="dashboardAgenda"></div>
+  </div>
+
+  <div class="card s12">
+    <div class="between"><h2>📚 Estudo de hoje</h2><button class="btn ghost" onclick="go('estudos')">Abrir Estudos</button></div>
+    <div id="dashboardStudy"></div>
+  </div>
+</div>
+</section>
+
+<!-- AGENDA -->
+<section id="agenda" class="section">
+<div class="card">
+  <div class="cal-toolbar">
+    <div class="cal-nav"><button onclick="calMove(-1)">‹</button><button onclick="calToday()">Hoje</button><button onclick="calMove(1)">›</button></div>
+    <div class="cal-title" id="calTitle"></div>
+    <div class="cal-toggle"><button id="monthViewBtn" class="btn ghost active" onclick="setCalendarView('month')">Mês</button><button id="weekViewBtn" class="btn ghost" onclick="setCalendarView('week')">Semana</button></div>
+  </div>
+  <div id="calendar"></div>
+</div>
+
+<div class="grid" style="margin-top:16px">
+  <div class="card s5">
+    <h2>🔁 Informações padrão</h2>
+    <p class="muted">Sua rotina pessoal recorrente. Você pode editar qualquer padrão ou adicionar outro.</p>
+    <div id="baseList"></div>
+    <button class="btn secondary" style="margin-top:10px" onclick="openBaseEditor()">Editar informações padrão</button>
+  </div>
+
+  <div class="card s7">
+    <h2>➕ Adicionar compromisso à agenda</h2>
+    <form id="agendaForm" class="form">
+      <div><label>Data</label><input id="aDate" type="date" required></div>
+      <div><label>Categoria</label><select id="aCat"><option>Compromisso</option><option>Trabalho</option><option>Faculdade</option><option>Estudo</option><option>Inglês</option><option>Vida pessoal</option><option>Clario</option><option>Outro</option></select></div>
+      <div class="full"><label>Título</label><input id="aTitle" required placeholder="Ex.: Estudar para a prova"></div>
+      <div><label>Início</label><input id="aStart" type="time"></div>
+      <div><label>Fim</label><input id="aEnd" type="time"></div>
+      <div class="full"><label>Observações</label><textarea id="aNote"></textarea></div>
+      <div class="full"><button class="btn" type="submit">Adicionar à agenda</button></div>
+    </form>
+  </div>
+</div>
+</section>
+
+<!-- PLANO -->
+<section id="plano" class="section">
+<div class="grid">
+  <div class="card s4">
+    <h2>✅ Plano do Dia</h2>
+    <label>Dia</label><input id="planDate" type="date">
+    <div class="notice" style="margin-top:12px">Os compromissos da Agenda aparecem como referência. A lista abaixo é independente e serve como seu checklist do dia.</div>
+    <h3 style="margin-top:17px">➕ Novo afazer</h3>
+    <form id="taskForm" class="form">
+      <div class="full"><label>O que precisa ser feito?</label><input id="tTitle" required placeholder="Ex.: Fazer 20 questões de estequiometria"></div>
+      <div><label>Tipo</label><select id="tType"><option>Transpetro</option><option>Trabalho</option><option>Faculdade</option><option>Vida pessoal</option><option>Clario</option><option>Outro</option></select></div>
+      <div><label>Tempo estimado (min)</label><input id="tMinutes" type="number" min="1" value="60"></div>
+      <div class="full"><label>Meta / resultado esperado</label><input id="tGoal" placeholder="Ex.: terminar 20 questões"></div>
+      <div class="full"><label>Observações</label><textarea id="tNote"></textarea></div>
+      <div class="full"><button class="btn" type="submit">Adicionar afazer</button></div>
+    </form>
+  </div>
+
+  <div class="card s8">
+    <div class="between"><div><h2>📋 Checklist do dia</h2><div class="muted" id="planDayLabel"></div></div><span class="badge blue" id="planProgress">0/0</span></div>
+    <div id="taskList"></div>
+  </div>
+
+  <div class="card s12">
+    <h2>📝 Observações sobre o dia</h2>
+    <textarea id="planNote" placeholder="Como foi o dia? O que você conseguiu fazer? O que ficou pendente?"></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="savePlanNote()">Salvar observações</button><span id="planSaved" class="muted"></span></div>
+  </div>
+</div>
+</section>
+
+<!-- ESTUDOS -->
+<section id="estudos" class="section">
+<div class="grid">
+  <div class="card s5">
+    <h2>📚 Registrar estudo</h2>
+    <form id="studyForm" class="form">
+      <div><label>Data</label><input id="sDate" type="date" required></div>
+      <div><label>Matéria</label><input id="sSubject" required placeholder="Ex.: Química / Português"></div>
+      <div class="full"><label>Assunto estudado</label><input id="sTopic" required placeholder="Ex.: Equilíbrio químico"></div>
+      <div><label>Tempo (min)</label><input id="sMinutes" type="number" min="1" required></div>
+      <div><label>Questões</label><input id="sQuestions" type="number" min="0" value="0"></div>
+      <div><label>Acertos</label><input id="sCorrect" type="number" min="0" value="0"></div>
+      <div><label>Nível</label><select id="sLevel"><option value="domino">🟢 Domino</option><option value="revisar">🟡 Preciso revisar</option><option value="enferrujado">🟠 Enferrujado</option><option value="nao-sei">🔴 Não sei</option></select></div>
+      <div class="full"><label>Considerações do estudo</label><textarea id="sNote" placeholder="O que aprendi? O que tive dificuldade?"></textarea></div>
+      <div class="full"><button class="btn" type="submit">Salvar estudo</button></div>
+    </form>
+  </div>
+  <div class="card s7"><div class="between"><h2>📖 Estudos registrados</h2><span class="muted">Seu histórico</span></div><div id="studyList"></div></div>
+  <div class="card s12"><h2>📝 Considerações recentes</h2><div id="studyNotes"></div></div>
+</div>
+</section>
+
+<!-- DOMÍNIO -->
+<section id="dominio" class="section">
+<div class="grid">
+  <div class="card s8"><h2>🧠 Diagnóstico / Domínio</h2><div id="domainList"></div></div>
+  <div class="card s4"><h2>📊 Resumo</h2><div id="domainSummary"></div></div>
+</div>
+</section>
+
+<!-- REVISOES -->
+<section id="revisoes" class="section">
+<div class="card">
+  <div class="between"><h2>🔄 Revisões previstas</h2><span class="muted">24h • 7 dias • 30 dias</span></div>
+  <div id="reviewList"></div>
+</div>
+</section>
+
+<!-- CLARIO -->
+<section id="clario" class="section">
+<div class="grid">
+  <div class="card s5">
+    <h2>💻 Clario — documentos</h2>
+    <p class="muted">O projeto permanece em pausa estratégica até a prova, mas os documentos ficam organizados aqui.</p>
+    <form id="docForm" class="form">
+      <div class="full"><label>Nome do documento</label><input id="dName" required placeholder="Ex.: Diagnóstico QBello"></div>
+      <div class="full"><label>Conclusão / resumo</label><textarea id="dDesc" placeholder="Cole aqui a conclusão ou síntese do documento."></textarea></div>
+      <div class="full"><label>Arquivo</label><input id="dFile" type="file" accept=".pdf,.doc,.docx,.txt,.html,.md,.png,.jpg,.jpeg"></div>
+      <div class="full"><button class="btn secondary" type="submit">Adicionar documento</button></div>
+    </form>
+    <p class="muted" style="margin-top:10px">Os arquivos ficam guardados neste navegador.</p>
+  </div>
+  <div class="card s7"><h2>📁 Arquivos do Clario</h2><div id="docList"></div></div>
+</div>
+</section>
+
+<!-- CONFIG -->
+<section id="config" class="section">
+<div class="grid">
+  <div class="card s6">
+    <h2>⚙️ Configurações gerais</h2>
+    <form id="settingsForm" class="form">
+      <div class="full"><label>Meta diária de estudo (minutos)</label><input id="cfgGoal" type="number" min="1" value="90"></div>
+      <div class="full"><label>Data da prova</label><input id="cfgExam" type="date"></div>
+      <div class="full"><button class="btn" type="submit">Salvar configurações</button></div>
+    </form>
+  </div>
+  <div class="card s6">
+    <h2>🗄️ Banco de dados</h2>
+    <p class="muted">Faça backup antes de trocar de navegador ou computador.</p>
+    <div class="row">
+      <button class="btn" onclick="exportBackup()">Exportar backup</button>
+      <label class="btn ghost" style="cursor:pointer">Importar backup<input id="importFile" type="file" accept=".json" hidden></label>
+      <button class="btn ghost" onclick="clearDatabase()">Apagar dados</button>
+    </div>
+    <div class="notice" style="margin-top:14px">Os dados de agenda, plano, estudos, revisões, configurações e documentos registrados pelo sistema ficam salvos localmente.</div>
+  </div>
+</div>
+</section>
+</main>
+
+<nav class="mobile-nav" id="mobileNav">
+<button data-page="dashboard" class="active"><b>🏠</b>Início</button>
+<button data-page="agenda"><b>📅</b>Agenda</button>
+<button data-page="plano"><b>✅</b>Plano</button>
+<button data-page="estudos"><b>📚</b>Estudos</button>
+<button data-page="revisoes"><b>🔄</b>Revisões</button>
+<button data-page="config"><b>⚙️</b>Mais</button>
+</nav>
+</div>
+
+<!-- Base editor modal -->
+<div id="baseModal" class="modal">
+<div class="modal-box">
+<div class="between"><h2>🔁 Editar informações padrão</h2><button class="btn ghost" onclick="closeBaseModal()">Fechar</button></div>
+<p class="muted">Edite sua rotina recorrente. Essas regras aparecem no calendário; você continua podendo adicionar compromissos extras normalmente.</p>
+<div id="baseEditor"></div>
+<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" onclick="saveBaseRules()">Salvar rotina padrão</button></div>
+</div></div>
+
+<script>
+const DBKEY='centralLucasCleanV1';
+let db = JSON.parse(localStorage.getItem(DBKEY)||'null') || {
+  settings:{dailyGoal:90,examDate:'2026-11-29'},
+  base:[
+    {dow:1,start:'04:30',end:'16:00',title:'Trabalho — CLT',category:'Trabalho'},
+    {dow:1,start:'18:30',end:'22:40',title:'Faculdade',category:'Faculdade'},
+    {dow:2,start:'04:30',end:'16:00',title:'Trabalho — CLT',category:'Trabalho'},
+    {dow:2,start:'19:10',end:'21:50',title:'Faculdade',category:'Faculdade'},
+    {dow:3,start:'04:30',end:'16:00',title:'Trabalho — CLT',category:'Trabalho'},
+    {dow:3,start:'18:30',end:'22:00',title:'Faculdade',category:'Faculdade'},
+    {dow:4,start:'04:30',end:'16:00',title:'Trabalho — CLT',category:'Trabalho'},
+    {dow:4,start:'18:30',end:'22:00',title:'Faculdade',category:'Faculdade'},
+    {dow:5,start:'04:30',end:'15:00',title:'Trabalho — CLT',category:'Trabalho'},
+    {dow:6,start:'09:00',end:'11:00',title:'Inglês',category:'Inglês'}
+  ],
+  events:[],tasks:[],studies:[],reviews:[],docs:[],notes:{}
+};
+
+function saveDB(){localStorage.setItem(DBKEY,JSON.stringify(db));renderAll()}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmtDate(s){return new Date(s+'T12:00:00').toLocaleDateString('pt-BR')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dowFromISO(s){return new Date(s+'T12:00:00').getDay()}
+function dayName(d){return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d]}
+function go(page){
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  document.querySelectorAll('.nav button,.mobile-nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
+  let nav=document.querySelector('.nav button[data-page="'+page+'"]')||document.querySelector('.mobile-nav button[data-page="'+page+'"]');
+  document.getElementById('pageTitle').textContent=nav.textContent.replace(/^\S+\s/,'');
+  window.scrollTo(0,0);
+  renderAll();
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+document.querySelectorAll('.mobile-nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+
+/* Agenda */
+let calCursor=new Date(),calView='month';
+function baseOnDate(date){
+  let dow=date.getDay(), key=new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  return db.base.filter(x=>x.dow===dow).map(x=>({...x,date:key,base:true,id:'base-'+x.dow+'-'+x.start}));
+}
+function customOnDate(date){
+  let key=new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  return db.events.filter(x=>x.date===key).map(x=>({...x,base:false}));
+}
+function allOnDate(date){return [...baseOnDate(date),...customOnDate(date)].sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'))}
+function iso(d){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function calMove(n){if(calView==='month')calCursor.setMonth(calCursor.getMonth()+n);else calCursor.setDate(calCursor.getDate()+n*7);renderCalendar()}
+function calToday(){calCursor=new Date();renderCalendar()}
+function setCalendarView(v){calView=v;document.getElementById('monthViewBtn').classList.toggle('active',v==='month');document.getElementById('weekViewBtn').classList.toggle('active',v==='week');renderCalendar()}
+function calendarEvent(e){
+  let ref=e.base?'base|'+e.dow+'|'+e.start:'event|'+e.id;
+  return '<div class="event '+(e.base?'base':'custom')+'" title="Editar" onclick="event.stopPropagation();editCalendarItem('+JSON.stringify(ref)+')">'+(e.start?esc(e.start)+' • ':'')+esc(e.title)+'</div>'
+}
+function renderCalendar(){
+  document.getElementById('calTitle').textContent=calView==='month'
+    ?calCursor.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})
+    :'Semana de '+calCursor.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'});
+  document.getElementById('calendar').innerHTML=calView==='month'?renderMonth():renderWeek();
+}
+function renderMonth(){
+  let y=calCursor.getFullYear(),m=calCursor.getMonth(),first=new Date(y,m,1),start=new Date(first),n=start.getDay();start.setDate(start.getDate()-(n===0?6:n-1));
+  let out='<div class="month">'+['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(x=>'<div class="mhead">'+x+'</div>').join('');
+  for(let i=0;i<42;i++){let d=new Date(start);d.setDate(start.getDate()+i);let cls='mcell'+(d.getMonth()!==m?' other ':'')+(iso(d)===today()?' today':'');out+='<div class="'+cls+'" onclick="openDayInPlan('+JSON.stringify(iso(d))+')"><div class="mnum">'+d.getDate()+'</div>'+allOnDate(d).map(calendarEvent).join('')+'</div>'}
+  out+='</div>';return out;
+}
+function renderWeek(){
+  let n=calCursor.getDay(),monday=new Date(calCursor);monday.setDate(calCursor.getDate()-(n===0?6:n-1));
+  let out='<div class="week"><div class="whead">Hora</div>';
+  for(let i=0;i<7;i++){let d=new Date(monday);d.setDate(monday.getDate()+i);out+='<div class="whead">'+d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'})+'</div>'}
+  for(let h=5;h<=23;h++){out+='<div class="wtime">'+String(h).padStart(2,'0')+':00</div>';for(let i=0;i<7;i++){let d=new Date(monday);d.setDate(monday.getDate()+i);let ev=allOnDate(d).filter(x=>x.start&&parseInt(x.start.split(':')[0],10)===h);out+='<div class="wslot" onclick="openDayInPlan('+JSON.stringify(iso(d))+')">'+ev.map(calendarEvent).join('')+'</div>'}}
+  out+='</div>';return out;
+}
+function openDayInPlan(date){document.getElementById('planDate').value=date;go('plano')}
+
+/* Agenda forms */
+document.getElementById('agendaForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let x={id:crypto.randomUUID(),date:document.getElementById('aDate').value,category:document.getElementById('aCat').value,title:document.getElementById('aTitle').value.trim(),start:document.getElementById('aStart').value,end:document.getElementById('aEnd').value,note:document.getElementById('aNote').value.trim()};
+ if(!x.title){alert('Digite um título.');return}
+ db.events.push(x);e.target.reset();document.getElementById('aDate').value=today();saveDB();
+});
+function editCalendarItem(ref){
+ let parts=ref.split('|');
+ if(parts[0]==='event'){
+   let x=db.events.find(e=>e.id===parts[1]);if(!x)return;
+   let title=prompt('Título do compromisso:',x.title);if(title===null)return;
+   let date=prompt('Data (AAAA-MM-DD):',x.date);if(date===null)return;
+   let start=prompt('Início (HH:MM):',x.start||'');if(start===null)return;
+   let end=prompt('Fim (HH:MM):',x.end||'');if(end===null)return;
+   x.title=title.trim()||x.title;x.date=date;x.start=start;x.end=end;saveDB();
+ } else {
+   openBaseEditor(parts[1],parts[2]);
+ }
+}
+function renderBaseList(){
+ let wrap=document.getElementById('baseList');let days=[1,2,3,4,5,6];
+ wrap.innerHTML=days.map(d=>{
+   let arr=db.base.filter(x=>x.dow===d);return '<div class="item"><strong>'+dayName(d)+'</strong><div class="muted">'+(arr.length?arr.map(x=>x.start+'–'+x.end+' • '+esc(x.title)).join('<br>'):'Sem padrão')+'</div></div>'
+ }).join('');
+}
+function openBaseEditor(dow=null,start=null){
+ let box=document.getElementById('baseEditor');
+ box.innerHTML=db.base.map((x,i)=>'<div class="item"><div class="form"><div><label>Dia</label><select data-bd="'+i+'">'+[1,2,3,4,5,6].map(d=>'<option value="'+d+'" '+(d===x.dow?'selected':'')+'>'+dayName(d)+'</option>').join('')+'</select></div><div><label>Categoria</label><input data-bc="'+i+'" value="'+esc(x.category)+'"></div><div><label>Título</label><input data-bt="'+i+'" value="'+esc(x.title)+'"></div><div><label>Início</label><input data-bs="'+i+'" type="time" value="'+x.start+'"></div><div><label>Fim</label><input data-be="'+i+'" type="time" value="'+x.end+'"></div><div><label>Ação</label><button type="button" class="btn ghost" onclick="removeBase('+i+')">Remover</button></div></div></div>').join('')+'<button class="btn secondary" type="button" onclick="addBase()">Adicionar padrão</button>';
+ document.getElementById('baseModal').classList.add('show');
+}
+function addBase(){db.base.push({dow:1,start:'18:00',end:'19:00',title:'Novo padrão',category:'Outro'});openBaseEditor()}
+function removeBase(i){db.base.splice(i,1);openBaseEditor()}
+function saveBaseRules(){
+ document.querySelectorAll('[data-bd]').forEach(el=>{let i=+el.dataset.bd;db.base[i].dow=+el.value;db.base[i].category=document.querySelector('[data-bc="'+i+'"]').value;db.base[i].title=document.querySelector('[data-bt="'+i+'"]').value;db.base[i].start=document.querySelector('[data-bs="'+i+'"]').value;db.base[i].end=document.querySelector('[data-be="'+i+'"]').value});
+ document.getElementById('baseModal').classList.remove('show');saveDB();
+}
+function closeBaseModal(){document.getElementById('baseModal').classList.remove('show')}
+
+/* Plano do dia */
+document.getElementById('taskForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let day=document.getElementById('planDate').value||today();
+ let x={id:crypto.randomUUID(),date:day,title:document.getElementById('tTitle').value.trim(),type:document.getElementById('tType').value,minutes:+document.getElementById('tMinutes').value||60,goal:document.getElementById('tGoal').value.trim(),note:document.getElementById('tNote').value.trim(),done:false};
+ if(!x.title){alert('Digite o que precisa ser feito.');return}
+ db.tasks.push(x);e.target.reset();document.getElementById('tMinutes').value=60;saveDB();
+});
+function renderPlan(){
+  let date=document.getElementById('planDate').value||today();
+  let arr=db.tasks.filter(x=>x.date===date);
+  let list=document.getElementById('taskList');
+  if(!arr.length){
+    list.innerHTML='<div class="empty">Nenhum afazer para este dia.</div>';
+  }else{
+    list.innerHTML='<div class="list">'+arr.map(x=>`
+      <div class="item ${x.done?'done':''}">
+        <div class="between">
+          <label style="display:flex;gap:8px;align-items:center;color:var(--text);font-size:14px">
+            <input class="check" type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${JSON.stringify(x.id)},this.checked)">
+            <strong>${esc(x.title)}</strong>
+          </label>
+          <button class="btn ghost" type="button" onclick="deleteTask(${JSON.stringify(x.id)})">Excluir</button>
+        </div>
+        <div class="muted" style="margin-top:6px">${esc(x.type)} • ${x.minutes} min${x.goal?' • Meta: '+esc(x.goal):''}</div>
+        ${x.note?'<div style="margin-top:7px">'+esc(x.note)+'</div>':''}
+      </div>`).join('')+'</div>';
+  }
+  document.getElementById('planDayLabel').textContent=new Date(date+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  let done=arr.filter(x=>x.done).length;
+  document.getElementById('planProgress').textContent=done+'/'+arr.length;
+  document.getElementById('planNote').value=db.notes[date]||'';
+}
+
+function toggleTask(id,v){let x=db.tasks.find(t=>t.id===id);if(x){x.done=v;saveDB()}}
+function deleteTask(id){db.tasks=db.tasks.filter(t=>t.id!==id);saveDB()}
+function savePlanNote(){let d=document.getElementById('planDate').value||today();db.notes[d]=document.getElementById('planNote').value;saveDB();document.getElementById('planSaved').textContent='Salvo ✓';setTimeout(()=>document.getElementById('planSaved').textContent='',1300)}
+
+/* Estudos */
+document.getElementById('studyForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ let s={id:crypto.randomUUID(),date:document.getElementById('sDate').value,subject:document.getElementById('sSubject').value.trim(),topic:document.getElementById('sTopic').value.trim(),minutes:+document.getElementById('sMinutes').value||0,questions:+document.getElementById('sQuestions').value||0,correct:+document.getElementById('sCorrect').value||0,level:document.getElementById('sLevel').value,note:document.getElementById('sNote').value.trim()};
+ if(!s.subject||!s.topic){alert('Preencha matéria e assunto.');return}
+ db.studies.push(s);
+ [1,7,30].forEach(n=>{let d=new Date(s.date+'T12:00:00');d.setDate(d.getDate()+n);db.reviews.push({id:crypto.randomUUID(),topic:s.topic,subject:s.subject,due:iso(d),done:false,kind:n===1?'24h':n===7?'7 dias':'30 dias'})});
+ e.target.reset();document.getElementById('sDate').value=today();document.getElementById('sQuestions').value=0;document.getElementById('sCorrect').value=0;saveDB();
+});
+function levelBadge(l){let m={domino:['green','Domino'],revisar:['yellow','Revisar'],enferrujado:['yellow','Enferrujado'],'nao-sei':['red','Não sei']},x=m[l]||m.revisar;return '<span class="badge '+x[0]+'">'+x[1]+'</span>'}
+function renderStudies(){
+ let arr=db.studies.slice().sort((a,b)=>b.date.localeCompare(a.date));
+ document.getElementById('studyList').innerHTML=arr.length?'<div class="list">'+arr.map(x=>'<div class="item"><div class="between"><div><strong>'+fmtDate(x.date)+' • '+esc(x.topic)+'</strong><div class="muted">'+esc(x.subject)+' • '+x.minutes+' min</div></div>'+levelBadge(x.level)+'</div><div class="muted" style="margin-top:6px">'+x.questions+' questões • '+x.correct+' acertos</div></div>').join('')+'</div>':'<div class="empty">Nenhum estudo registrado.</div>';
+ let notes=arr.filter(x=>x.note).slice(0,8);document.getElementById('studyNotes').innerHTML=notes.length?notes.map(x=>'<div class="item"><strong>'+fmtDate(x.date)+' • '+esc(x.topic)+'</strong><div style="margin-top:5px">'+esc(x.note)+'</div></div>').join(''):'<div class="empty">Suas considerações aparecerão aqui.</div>';
+}
+
+/* Domínio */
+function renderDomain(){
+ let map={};db.studies.forEach(s=>{map[s.topic]??={count:0,levels:[],questions:0,correct:0};map[s.topic].count++;map[s.topic].levels.push(s.level);map[s.topic].questions+=s.questions;map[s.topic].correct+=s.correct});
+ let entries=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0]));
+ document.getElementById('domainList').innerHTML=entries.length?'<table style="width:100%;border-collapse:collapse"><tr><th style="padding:8px;text-align:left">Assunto</th><th style="padding:8px;text-align:left">Domínio</th><th style="padding:8px;text-align:left">Questões</th><th style="padding:8px;text-align:left">Acerto</th></tr>'+entries.map(([t,v])=>{let r={domino:3,revisar:2,enferrujado:1,'nao-sei':0};let avg=v.levels.reduce((a,l)=>a+r[l],0)/v.levels.length;let l=avg>=2.5?'domino':avg>=1.5?'revisar':avg>=.75?'enferrujado':'nao-sei';return '<tr><td style="padding:8px;border-top:1px solid var(--line)">'+esc(t)+'</td><td style="padding:8px;border-top:1px solid var(--line)">'+levelBadge(l)+'</td><td style="padding:8px;border-top:1px solid var(--line)">'+v.questions+'</td><td style="padding:8px;border-top:1px solid var(--line)">'+(v.questions?((v.correct/v.questions)*100).toFixed(1):0)+'%</td></tr>'}).join('')+'</table>':'<div class="empty">O domínio será formado pelos estudos registrados.</div>';
+ let total=db.studies.length, q=db.studies.reduce((a,x)=>a+x.questions,0), c=db.studies.reduce((a,x)=>a+x.correct,0);document.getElementById('domainSummary').innerHTML='<div class="item"><strong>Registros de estudo</strong><div class="metric">'+total+'</div></div><div class="item"><strong>Questões</strong><div class="metric">'+q+'</div></div><div class="item"><strong>Aproveitamento</strong><div class="metric">'+(q?(c/q*100).toFixed(1):0)+'%</div></div>';
+}
+
+/* Revisões */
+function renderReviews(){
+  let now=today(),arr=db.reviews.slice().sort((a,b)=>a.due.localeCompare(b.due));
+  let box=document.getElementById('reviewList');
+  if(!arr.length){box.innerHTML='<div class="empty">As revisões aparecerão automaticamente após registrar estudos.</div>';return}
+  box.innerHTML='<div class="list">'+arr.map(r=>`
+    <div class="item ${r.done?'done':''}">
+      <div class="between">
+        <div>
+          <span class="badge ${r.done?'green':r.due<now?'red':r.due===now?'yellow':'blue'}">${r.kind}</span>
+          <strong style="margin-left:6px">${esc(r.topic)}</strong>
+          <div class="muted">${esc(r.subject)} • ${fmtDate(r.due)}</div>
+        </div>
+        <div>
+          ${r.done?'<span class="badge green">Concluída</span>':'<button class="btn secondary" type="button" onclick="completeReview('+JSON.stringify(r.id)+')">Concluir</button>'}
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+function completeReview(id){let r=db.reviews.find(x=>x.id===id);if(r)r.done=true;saveDB()}
+
+/* Clario docs via IndexedDB */
+const IDB_NAME='CentralLucasFiles',IDB_STORE='docs';
+let idbPromise=null;
+function openIDB(){
+ return idbPromise||(idbPromise=new Promise((resolve,reject)=>{let req=indexedDB.open(IDB_NAME,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(IDB_STORE))req.result.createObjectStore(IDB_STORE,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)}));
+}
+async function saveDoc(file,meta){
+ let idb=await openIDB();return new Promise((resolve,reject)=>{let tx=idb.transaction(IDB_STORE,'readwrite'),st=tx.objectStore(IDB_STORE);st.put({id:crypto.randomUUID(),name:meta.name,desc:meta.desc,filename:file.name,type:file.type,file:file});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})
+}
+async function getDocs(){let idb=await openIDB();return new Promise((resolve,reject)=>{let tx=idb.transaction(IDB_STORE,'readonly'),req=tx.objectStore(IDB_STORE).getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function deleteDoc(id){let idb=await openIDB();return new Promise((resolve,reject)=>{let tx=idb.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
+async function renderDocs(){
+  let arr=[];
+  try{arr=await getDocs()}catch(e){}
+  let box=document.getElementById('docList');
+  if(!arr.length){box.innerHTML='<div class="empty">Nenhum documento cadastrado.</div>';return}
+  box.innerHTML='<div class="list">'+arr.map(d=>`
+    <div class="item">
+      <div class="between">
+        <div><strong>${esc(d.name)}</strong><div class="muted">${esc(d.filename)}</div></div>
+        <div class="row">
+          <button class="btn secondary" type="button" onclick="openDoc(${JSON.stringify(d.id)})">Abrir</button>
+          <button class="btn ghost" type="button" onclick="printDoc(${JSON.stringify(d.id)})">Imprimir</button>
+          <button class="btn ghost" type="button" onclick="removeDoc(${JSON.stringify(d.id)})">Excluir</button>
+        </div>
+      </div>
+      ${d.desc?'<div style="margin-top:8px">'+esc(d.desc)+'</div>':''}
+    </div>`).join('')+'</div>';
+}
+
+async function openDoc(id){let arr=await getDocs(),d=arr.find(x=>x.id===id);if(!d)return;let url=URL.createObjectURL(d.file);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function printDoc(id){let arr=await getDocs(),d=arr.find(x=>x.id===id);if(!d)return;let url=URL.createObjectURL(d.file),w=window.open(url,'_blank');if(w)w.onload=()=>w.print();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function removeDoc(id){if(confirm('Excluir este documento?')){await deleteDoc(id);renderDocs()}}
+document.getElementById('docForm').addEventListener('submit',async e=>{
+ e.preventDefault();let f=document.getElementById('dFile').files[0];if(!f){alert('Selecione um arquivo.');return}
+ await saveDoc(f,{name:document.getElementById('dName').value.trim(),desc:document.getElementById('dDesc').value.trim()});
+ e.target.reset();renderDocs();
+});
+
+/* Config / backup */
+document.getElementById('settingsForm').addEventListener('submit',e=>{
+ e.preventDefault();db.settings.dailyGoal=+document.getElementById('cfgGoal').value||90;db.settings.examDate=document.getElementById('cfgExam').value||'2026-11-29';saveDB();alert('Configurações salvas.');
+});
+document.getElementById('importFile').addEventListener('change',e=>{
+ let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.settings||!x.base||!x.events||!x.tasks||!x.studies||!x.reviews){alert('Backup inválido.');return}db=x;saveDB();alert('Backup importado.')}catch{alert('Não foi possível importar.')}};r.readAsText(f);
+});
+function exportBackup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='central-lucas-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function clearDatabase(){if(confirm('Isso apagará agenda, plano, estudos e revisões deste navegador. Continuar?')){localStorage.removeItem(DBKEY);location.reload()}}
+
+/* Dashboard */
+function renderDashboard(){
+  let exam=new Date((db.settings.examDate||'2026-11-29')+'T00:00:00');
+  let days=Math.max(0,Math.ceil((exam-new Date())/86400000));
+  document.getElementById('daysLeft').textContent=days;
+  let goal=+db.settings.dailyGoal||90;
+  let todayTasks=db.tasks.filter(x=>x.date===today()),done=todayTasks.filter(x=>x.done).length;
+  let studied=db.studies.filter(x=>x.date===today()).reduce((a,x)=>a+x.minutes,0);
+  document.getElementById('dailyGoal').textContent=(studied/60).toFixed(1)+'h / '+(goal/60).toFixed(1)+'h';
+  document.getElementById('goalBar').style.width=Math.min(100,studied/goal*100)+'%';
+  document.getElementById('todayTasks').textContent=done+'/'+todayTasks.length;
+  document.getElementById('todayReviews').textContent=db.reviews.filter(x=>x.due===today()&&!x.done).length;
+  document.getElementById('dashboardTasks').innerHTML=todayTasks.length?'<div class="list">'+todayTasks.slice(0,8).map(x=>`
+    <div class="item ${x.done?'done':''}">
+      <label style="display:flex;align-items:center;gap:8px;color:var(--text)">
+        <input class="check" type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${JSON.stringify(x.id)},this.checked)">
+        <strong>${esc(x.title)}</strong>
+      </label>
+    </div>`).join('')+'</div>':'<div class="empty">Nenhum afazer para hoje.</div>';
+  let ev=allOnDate(new Date(today()+'T12:00:00'));
+  document.getElementById('dashboardAgenda').innerHTML=ev.length?'<div class="list">'+ev.map(x=>`
+    <div class="item">
+      <span class="badge ${x.base?'blue':'purple'}">${x.base?'Padrão':'Extra'}</span>
+      <strong style="margin-left:5px">${esc(x.title)}</strong>
+      <div class="muted">${x.start||'Horário livre'}${x.end?'–'+x.end:''}</div>
+    </div>`).join('')+'</div>':'<div class="empty">Nada na agenda hoje.</div>';
+  let st=db.studies.filter(x=>x.date===today());
+  document.getElementById('dashboardStudy').innerHTML=st.length?'<div class="list">'+st.map(x=>`
+    <div class="item"><strong>${esc(x.topic)}</strong><div class="muted">${esc(x.subject)} • ${x.minutes} min • ${x.correct}/${x.questions} questões</div></div>`).join('')+'</div>':'<div class="empty">Nenhum estudo registrado hoje.</div>';
+}
+
+function renderConfig(){document.getElementById('cfgGoal').value=db.settings.dailyGoal;document.getElementById('cfgExam').value=db.settings.examDate}
+function renderAll(){
+ document.getElementById('todayLabel').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+ renderDashboard();renderCalendar();renderBaseList();renderPlan();renderStudies();renderDomain();renderReviews();renderConfig();renderDocs();
+}
+document.getElementById('aDate').value=today();document.getElementById('planDate').value=today();document.getElementById('sDate').value=today();renderAll();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
