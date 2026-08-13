@@ -1,0 +1,10 @@
+{
+  "name": "Central do Lucas — Transpetro",
+  "short_name": "Central Lucas",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#111827",
+  "lang": "pt-BR",
+  "description": "Central pessoal de estudos, agenda e preparação para a Transpetro."
+}
