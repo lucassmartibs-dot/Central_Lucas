@@ -343,7 +343,36 @@ let db = JSON.parse(localStorage.getItem(DBKEY)||'null') || {
   events:[],tasks:[],studies:[],reviews:[],docs:[],notes:{}
 };
 
-function saveDB(){localStorage.setItem(DBKEY,JSON.stringify(db));renderAll()}
+async function saveDB(){
+  localStorage.setItem(DBKEY,JSON.stringify(db));
+
+  try{
+    const tasks = db.tasks.map(x => ({
+      id: x.id,
+      date: x.date,
+      title: x.title,
+      type: x.type || null,
+      minutes: Number(x.minutes) || 60,
+      goal: x.goal || null,
+      note: x.note || null,
+      done: !!x.done
+    }));
+
+    if(tasks.length){
+      const { error } = await supabaseClient
+        .from('tasks')
+        .upsert(tasks, { onConflict: 'id' });
+
+      if(error) throw error;
+    }
+
+    renderAll();
+
+  }catch(error){
+    console.error('Erro ao sincronizar tarefas:', error);
+    renderAll();
+  }
+}
 function today(){return new Date().toISOString().slice(0,10)}
 function fmtDate(s){return new Date(s+'T12:00:00').toLocaleDateString('pt-BR')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -609,6 +638,36 @@ function renderAll(){
  document.getElementById('todayLabel').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
  renderDashboard();renderCalendar();renderBaseList();renderPlan();renderStudies();renderDomain();renderReviews();renderConfig();renderDocs();
 }
+async function loadTasksFromSupabase(){
+  try{
+    const { data, error } = await supabaseClient
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if(error) throw error;
+
+    if(data){
+      db.tasks = data.map(x => ({
+        id: x.id,
+        date: x.date,
+        title: x.title,
+        type: x.type || '',
+        minutes: Number(x.minutes) || 60,
+        goal: x.goal || '',
+        note: x.note || '',
+        done: !!x.done
+      }));
+
+      localStorage.setItem(DBKEY, JSON.stringify(db));
+      renderAll();
+    }
+
+  }catch(error){
+    console.error('Erro ao carregar tarefas do Supabase:', error);
+  }
+}
+  loadTasksFromSupabase();
 document.getElementById('aDate').value=today();document.getElementById('planDate').value=today();document.getElementById('sDate').value=today();renderAll();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 </script>
