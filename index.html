@@ -361,15 +361,14 @@ async function saveDB(){
     if(tasks.length){
       const { error } = await supabaseClient
         .from('tasks')
-        .upsert(tasks, { onConflict: 'id' });
+        .upsert(tasks,{onConflict:'id'});
 
       if(error) throw error;
     }
 
     renderAll();
-
   }catch(error){
-    console.error('Erro ao sincronizar tarefas:', error);
+    console.error('Erro ao sincronizar tarefas com o Supabase:',error);
     renderAll();
   }
 }
@@ -503,8 +502,29 @@ function renderPlan(){
   document.getElementById('planNote').value=db.notes[date]||'';
 }
 
-function toggleTask(id,v){let x=db.tasks.find(t=>t.id===id);if(x){x.done=v;saveDB()}}
-function deleteTask(id){db.tasks=db.tasks.filter(t=>t.id!==id);saveDB()}
+function toggleTask(id,v){
+  let x=db.tasks.find(t=>t.id===id);
+  if(x){x.done=v;saveDB()}
+}
+
+async function deleteTask(id){
+  db.tasks=db.tasks.filter(t=>t.id!==id);
+  localStorage.setItem(DBKEY,JSON.stringify(db));
+
+  try{
+    const { error } = await supabaseClient
+      .from('tasks')
+      .delete()
+      .eq('id',id);
+
+    if(error) throw error;
+  }catch(error){
+    console.error('Erro ao excluir tarefa do Supabase:',error);
+  }
+
+  renderAll();
+}
+
 function savePlanNote(){let d=document.getElementById('planDate').value||today();db.notes[d]=document.getElementById('planNote').value;saveDB();document.getElementById('planSaved').textContent='Salvo ✓';setTimeout(()=>document.getElementById('planSaved').textContent='',1300)}
 
 /* Estudos */
@@ -643,31 +663,72 @@ async function loadTasksFromSupabase(){
     const { data, error } = await supabaseClient
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: true });
+      .order('created_at',{ascending:true});
 
     if(error) throw error;
 
-    if(data){
-      db.tasks = data.map(x => ({
-        id: x.id,
-        date: x.date,
-        title: x.title,
-        type: x.type || '',
-        minutes: Number(x.minutes) || 60,
-        goal: x.goal || '',
-        note: x.note || '',
-        done: !!x.done
+    const remoteTasks=(data||[]).map(x=>({
+      id:x.id,
+      date:x.date,
+      title:x.title,
+      type:x.type||'',
+      minutes:Number(x.minutes)||60,
+      goal:x.goal||'',
+      note:x.note||'',
+      done:!!x.done
+    }));
+
+    const localTasks=Array.isArray(db.tasks)?db.tasks:[];
+
+    // Junta os dados do navegador com os dados do Supabase.
+    // Uma tabela vazia não apaga uma tarefa que já existe localmente.
+    const merged=new Map();
+    remoteTasks.forEach(x=>merged.set(x.id,x));
+    localTasks.forEach(x=>merged.set(x.id,{
+      id:x.id,
+      date:x.date,
+      title:x.title,
+      type:x.type||'',
+      minutes:Number(x.minutes)||60,
+      goal:x.goal||'',
+      note:x.note||'',
+      done:!!x.done
+    }));
+
+    db.tasks=Array.from(merged.values());
+
+    // Envia as tarefas locais para o Supabase.
+    if(localTasks.length){
+      const tasksToSync=localTasks.map(x=>({
+        id:x.id,
+        date:x.date,
+        title:x.title,
+        type:x.type||null,
+        minutes:Number(x.minutes)||60,
+        goal:x.goal||null,
+        note:x.note||null,
+        done:!!x.done
       }));
 
-      localStorage.setItem(DBKEY, JSON.stringify(db));
-      renderAll();
+      const {error:syncError}=await supabaseClient
+        .from('tasks')
+        .upsert(tasksToSync,{onConflict:'id'});
+
+      if(syncError) throw syncError;
     }
 
+    localStorage.setItem(DBKEY,JSON.stringify(db));
+    renderAll();
+
   }catch(error){
-    console.error('Erro ao carregar tarefas do Supabase:', error);
+    console.error('Erro ao carregar/sincronizar tarefas do Supabase:',error);
+    // Se o Supabase falhar, mantém os dados locais.
+    renderAll();
   }
 }
-  loadTasksFromSupabase();
+
+loadTasksFromSupabase();
+
 document.getElementById('aDate').value=today();document.getElementById('planDate').value=today();document.getElementById('sDate').value=today();renderAll();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 </script>
