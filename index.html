@@ -680,26 +680,20 @@ async function loadTasksFromSupabase(){
 
     const localTasks=Array.isArray(db.tasks)?db.tasks:[];
 
-    // Junta os dados do navegador com os dados do Supabase.
-    // Uma tabela vazia não apaga uma tarefa que já existe localmente.
-    const merged=new Map();
-    remoteTasks.forEach(x=>merged.set(x.id,x));
-    localTasks.forEach(x=>merged.set(x.id,{
-      id:x.id,
-      date:x.date,
-      title:x.title,
-      type:x.type||'',
-      minutes:Number(x.minutes)||60,
-      goal:x.goal||'',
-      note:x.note||'',
-      done:!!x.done
-    }));
+    /*
+      Sincronização PC <-> celular:
 
-    db.tasks=Array.from(merged.values());
+      1. Tarefas que já existem no Supabase são a fonte principal.
+      2. Tarefas que existem somente neste aparelho são enviadas para a nuvem.
+      3. Depois disso, todos os aparelhos recebem a mesma lista.
+    */
 
-    // Envia as tarefas locais para o Supabase.
-    if(localTasks.length){
-      const tasksToSync=localTasks.map(x=>({
+    const remoteIds=new Set(remoteTasks.map(x=>x.id));
+
+    const localOnly=localTasks.filter(x=>!remoteIds.has(x.id));
+
+    if(localOnly.length){
+      const tasksToSync=localOnly.map(x=>({
         id:x.id,
         date:x.date,
         title:x.title,
@@ -717,17 +711,37 @@ async function loadTasksFromSupabase(){
       if(syncError) throw syncError;
     }
 
+    /*
+      Recarrega depois do envio para garantir que
+      todos os aparelhos trabalhem com a mesma versão.
+    */
+    const { data:finalData, error:finalError } = await supabaseClient
+      .from('tasks')
+      .select('*')
+      .order('created_at',{ascending:true});
+
+    if(finalError) throw finalError;
+
+    db.tasks=(finalData||[]).map(x=>({
+      id:x.id,
+      date:x.date,
+      title:x.title,
+      type:x.type||'',
+      minutes:Number(x.minutes)||60,
+      goal:x.goal||'',
+      note:x.note||'',
+      done:!!x.done
+    }));
+
     localStorage.setItem(DBKEY,JSON.stringify(db));
     renderAll();
 
   }catch(error){
     console.error('Erro ao carregar/sincronizar tarefas do Supabase:',error);
-    // Se o Supabase falhar, mantém os dados locais.
     renderAll();
   }
 }
-
-loadTasksFromSupabase();
+      
 
 document.getElementById('aDate').value=today();document.getElementById('planDate').value=today();document.getElementById('sDate').value=today();renderAll();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
